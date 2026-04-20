@@ -1,0 +1,489 @@
+---
+title: "Foundations of Estimation in Biomedical Studies"
+author: "<br><br><span style='font-size:25px;'><strong>Lesley Chapman Hannah, Ph.D., M.S.</strong></span><br>College of Graduate Studies<br>Northeast Ohio Medical University"
+
+format: pptx
+
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r, echo=FALSE}
+library(tidyverse)
+library(broom)
+library(scales)
+set.seed(104)
+
+biomarker_df <- tibble(
+  id = 1:180,
+  treatment = rep(c("Placebo", "Low dose", "High dose"), each = 60),
+  ifng = c(
+    rnorm(60, mean = 11.5, sd = 4.2),
+    rnorm(60, mean = 15.3, sd = 4.8),
+    rnorm(60, mean = 19.8, sd = 5.1)
+  ),
+  response = c(
+    rbinom(60, 1, 0.28),
+    rbinom(60, 1, 0.45),
+    rbinom(60, 1, 0.62)
+  ),
+  infections = c(
+    rpois(60, lambda = 1.4),
+    rpois(60, lambda = 1.1),
+    rpois(60, lambda = 0.8)
+  ),
+  age = round(rnorm(180, mean = 61, sd = 10)),
+  bmi = round(rnorm(180, mean = 29, sd = 4.5), 1)
+)
+```
+
+### Lecture Overview
+
+-   define estimation in biomedical and clinical data analysis
+-   provide context for the intersection between estimation, descriptive statistics and formal inference
+-   explain how sampling variability motivates interval estimation
+
+------------------------------------------------------------------------
+
+### Estimation in Biomedical Data Analysis
+
+::: {style="font-size:0.5em"}
+> Estimation uses the observed sample to quantify unknown population values, expressing both the best-supported value and the uncertainty introduced by sampling variability
+
+Biomedical and clinical research is conducted on samples instead of data from entire populations
+
+Each dataset represents:
+
+-   subset of patients
+-   observed under specific study conditions
+-   measured at a defined point in time
+
+Within the context of biomedical research the purpose of analyzing a sample is to learn about \[select\]:
+
+-   broader patient population
+-   underlying biological processes
+-   treatment effects
+:::
+
+------------------------------------------------------------------------
+
+### Estimation Definition
+
+::: {style="font-size:0.68em"}
+> Estimation: process of using sample data to produce quantitative approximations of unknown population or biological parameters that inform biomedical and clinical understanding
+
+In practice, estimation allows us to:
+
+-   pproximate a true mean biomarker level
+-   approximate a true probability of response
+-   approximate a true rate of clinical events
+:::
+
+------------------------------------------------------------------------
+
+### Whats being estimated?
+
+::: {style="font-size:0.68em"}
+estimation targets defined population quantities, including:
+
+-   `probabilities`: proportion of patients with a mutation
+-   `rates`: mutation counts per genomic region
+-   `means`: average biomarker levels
+-   `effects`: associations between predictors and outcomes
+
+quantities not directly observed $\rightarrow$ estimated from sample data
+
+estimation goal: produce values that reflect these underlying quantities as accurately as possible given the data available
+:::
+
+------------------------------------------------------------------------
+
+### Review: Population Parameters and Sample Estimators
+
+::: {style="font-size:0.58em"}
+-   `population`: the full set of individuals or biological units of interest, such as all patients with a specific disease
+
+-   `sample`: the subset of individuals that are actually observed in a study
+
+-   to estimate an unknown population parameters we use sample data as a basis for estimating the unknown population parameters because the full population parameter cannot be observed
+
+since we usually can’t observe the whole population, we rely on sample data to approximate unknown parameters - numerical quantity that describes a population or biological process:
+
+$$
+\mu \approx \bar{x}, \qquad p \approx \hat{p}, \qquad \lambda \approx \hat{\lambda}
+$$ - population mean μ is estimated by the sample mean $\bar{x}$
+
+-   population proportion p is estimated by the sample proportion $\hat{p}$
+
+-   population rate 𝜆is estimated by an observed sample rate $\hat{\lambda}$
+:::
+
+------------------------------------------------------------------------
+
+### Estimation Techniques Definition
+
+> estimation techniques are methods for using sample data to produce quantitative estimates of unknown population or biological parameters that inform clinical and biomedical decisions
+
+Statistical estimation techniques are the primary tools used to quantify biological signals from observed data and translate them into population-level quantities
+
+------------------------------------------------------------------------
+
+### Descriptive Statistics, Estimation, and Inference
+
+::: {style="font-size:0.68em"}
+-   descriptive statistics summarize the observed sample using quantities such as the mean, median, standard deviation, proportion, and range
+    -   what are the main features of this sample?
+-   estimation uses those summaries as tools for approximating **unknown population quantities** such as a true mean biomarker level, a true treatment response probability, or a true event rate
+    -   what does this sample suggest about the population or biological process that generated it?
+-   inference estimates:
+    -   process of quantifying uncertainty and making decisions based on data, often under repeated sampling
+    -   variable quantity, how variable the estimate would be if we repeated the study many times
+    -   confidence intervals and hypothesis tests are tools that formalize this variability.
+:::
+
+------------------------------------------------------------------------
+
+### Estimation and Sampling
+
+::: {style="font-size:0.68em"}
+estimates are computed from sampled data rather than the full population.
+
+datasets represents:
+
+-   subset of individuals
+
+-   observed under specific study conditions
+
+-   measured at a defined point in time
+
+-   value of an estimate depends on which observations are included in the sample
+
+-   different sample from the same population may produce a different estimate
+:::
+
+------------------------------------------------------------------------
+
+### Sampling Variability
+
+::: {style="font-size:0.68em"}
+-   `sampling variability`: variation in a statistic across repeated random samples from the same population, reflecting that each sample provides only partial information about the population parameter it is used to estimate
+    -   estimates vary because each sample captures a different subset of the population
+    -   sampling variability key concept for uncertainty quantification
+    -   defines how estimates behave when data are collected from patient populations
+    -   confidence intervals, standard errors, and other measures of precision are derived from the distribution of estimates across repeated samples
+-   estimation involves using sampled data to characterize an unknown population quantity
+    -   estimate depends on which observations are included and will vary across different possible samples
+:::
+
+------------------------------------------------------------------------
+
+### Research Example
+
+::: {style="font-size:0.68em"}
+**Background**:
+
+-   consider a clinical study of metabolic health in adults receiving routine outpatient care
+-   study aim : learn about the broader patient population, not only the specific individuals who were enrolled in one dataset
+
+Questions of interest include estimating the following targets linekd to an unknonw population quantity:
+
+-   What is the average fasting glucose level in the target population?
+-   What proportion of patients meet criteria for metabolic syndrome?
+-   What is the expected number of follow-up visits per patient?
+-   How are these outcomes associated with age and body mass index?
+:::
+
+------------------------------------------------------------------------
+
+## Research Objectives
+
+::: {style="font-size:0.68em"}
+-   identify the population quantity being targeted
+-   distinguish a parameter from its sample-based estimate
+-   explain why estimates vary across samples
+-   quantify the variability of an estimate
+-   interpret confidence intervals as estimation tools
+-   connect simple estimation to model-based estimation
+:::
+
+------------------------------------------------------------------------
+
+### Example Dataset: Simulated Population
+
+::: {style="font-size:0.68em"}
+Simulated Dataset: true population quantities with sample-based estimates
+
+The population contains:
+
+-   age
+-   body mass index
+-   fasting glucose as a continuous outcome
+-   metabolic syndrome as a binary outcome
+-   annual follow-up visits as a count outcome
+
+```{r, echo=FALSE}
+set.seed(123)
+
+N_pop <- 10000
+
+population <- data.frame(
+  id = 1:N_pop,
+  age = rnorm(N_pop, mean = 60, sd = 10),
+  bmi = rnorm(N_pop, mean = 28, sd = 5)
+)
+
+population$glucose <- rnorm(
+  N_pop,
+  mean = 100 + 0.8 * population$bmi,
+  sd = 15
+)
+
+population$metabolic_syndrome <- rbinom(
+  N_pop,
+  size = 1,
+  prob = plogis(-5 + 0.08 * population$bmi + 0.03 * population$age)
+)
+
+population$visits <- rpois(
+  N_pop,
+  lambda = exp(0.5 + 0.02 * population$age)
+)
+
+head(population)
+```
+:::
+
+------------------------------------------------------------------------
+
+## Population Mean of Fasting Glucose
+
+::: {style="font-size:0.68em"}
+-   **population mean fasting glucose**: average glucose level across all individuals in the full target population
+
+-   entire simulated population is available $\rightarrow$ true value can be computed directly
+
+```{r}
+true_mean_glucose <- mean(population$glucose)
+true_mean_glucose
+```
+
+-   true population mean fasting glucose for this simulated population: 122.26 mg/dL
+-   represents a measure fasting glucose for every individual in the target population and represents the average across all of those individuals
+:::
+
+------------------------------------------------------------------------
+
+### Population Proportion With Metabolic Syndrome
+
+::: {style="font-size:0.68em"}
+**metabolic syndrome**: clinical condition defined by the co-occurrence of multiple metabolic risk factors that increase the likelihood of cardiovascular disease and type 2 diabetes
+
+Goal: find population proportion with metabolic syndrome - proportion of all individuals in the full population whose outcome value equals one
+
+-   probability that a randomly selected patient from the target population has metabolic syndrome
+:::
+
+------------------------------------------------------------------------
+
+### Population Proportion With Metabolic Syndrome
+
+::: {style="font-size:0.68em"}
+```{r}
+true_prop_metabolic <- mean(population$metabolic_syndrome)
+true_prop_metabolic
+```
+
+-   28.55% of individuals in the full population have metabolic syndrome
+-   probability that a randomly selected individual from this population has metabolic syndrome is 0.2855
+-   out of every 100 individuals in this population, about 29 would meet criteria for metabolic syndrome
+
+Note: metabolic syndrome captures co-occurring factors like: - elevated glucose - abdominal obesity - dyslipidemia - hypertension
+:::
+
+------------------------------------------------------------------------
+
+## Sampling From the Population
+
+::: {style="font-size:0.68em"}
+-   **sampling**: mechanism that generates the observed data used for estimation by sampling individuals from the broader population
+
+-   sample below represents 150 individuals randomly drawn from the full population
+
+Note: any quantity computed from the sample is only an estimate of the corresponding population quantity
+
+```{r}
+n <- 150
+
+sample_data <- population[sample(1:N_pop, n), ]
+
+head(sample_data)
+```
+:::
+
+------------------------------------------------------------------------
+
+## Estimating the Population Mean
+
+::: {style="font-size:0.68em"}
+-   sample mean fasting glucose: 121.81 mg/dL
+-   average glucose level observed in this specific sample
+-   true population mean: 122.2571 mg/dL
+-   sample provides a reasonable approximation of the true population mean
+
+```{r}
+mean_glucose <- mean(sample_data$glucose)
+mean_glucose
+```
+:::
+
+------------------------------------------------------------------------
+
+### Sampling Variability
+
+::: {style="font-size:0.5em"}
+`sampling variability` : describes how an estimate changes across repeated samples drawn from the same population
+
+-   shows the range of values the estimator can take under repeated sampling
+
+```{r, echo=FALSE}
+#| fig-width: 4 
+#| fig-height: 3
+set.seed(123)
+
+sample_means <- replicate(500, {
+  s <- population[sample(1:N_pop, n), ]
+  mean(s$glucose)
+})
+
+plot <- hist(
+  sample_means,
+  main = "Sampling Distribution of the \n Sample Mean for Glucose",
+  xlab = "Sample Mean Glucose"
+)
+abline(v = true_mean_glucose, lwd = 2, lty = 2)
+
+```
+:::
+
+------------------------------------------------------------------------
+
+### Sampling Variability
+
+::: {style="font-size:0.5em"}
+**Plot Interpretation**
+
+-   histogram shows sampling distribution of the sample mean
+-   distribution shows that the estimate varies from sample to sample $\rightarrow$ cluster around the population mean glucose level
+-   dashed vertical line represents the population mean
+-   each bar represents a sample mean calculated from a different simulated study of glucose levels
+-   every sample is drawn from the same underlying population $\rightarrow$ estimated mean is not identical across samples
+-   distribution is approximately symmetric and centered around a value near 122
+-   most of the sample means fall within a narrow range between 120 and 124
+
+Note: a single observed estimate is one realization from a broader distribution of possible estimates
+
+```{r, echo=FALSE}
+#| fig-width: 4 
+#| fig-height: 3
+set.seed(123)
+
+sample_means <- replicate(500, {
+  s <- population[sample(1:N_pop, n), ]
+  mean(s$glucose)
+})
+
+plot <- hist(
+  sample_means,
+  main = "Sampling Distribution of the \n Sample Mean for Glucose",
+  xlab = "Sample Mean Glucose"
+)
+abline(v = true_mean_glucose, lwd = 2, lty = 2)
+
+```
+:::
+
+------------------------------------------------------------------------
+
+### Center and Spread of the Sampling Distribution
+
+::: {style="font-size:0.68em"}
+distribution summarizes two quantities:
+
+-   mean of the sampling distribution
+-   standard deviation of the sampling distribution
+
+standard deviation: 1.21
+
+-   describes how much the estimate varies from sample to sample
+-   measures distance between an estimated mean and the true population mean across repeated studies
+
+```{r}
+c(
+  mean_of_sample_means = mean(sample_means),
+  sd_of_sample_means = sd(sample_means)
+)
+```
+:::
+
+------------------------------------------------------------------------
+
+### Standard Error
+
+::: {style="font-size:0.68em"}
+**standard error**: metric that describes how much an estimate is expected to vary across repeated samples
+
+`standard deviation (SD)`: describes how much individual observations vary
+
+-   how different patients are from one another
+-   how spread out the data are
+
+`standard error (SE)` : describes how much the estimate varies
+
+-   how much the sample mean would change across repeated studies
+-   how precise the estimate is as a representation of the population
+:::
+
+------------------------------------------------------------------------
+
+## Standard Error
+
+::: {style="font-size:0.68em"}
+```{r}
+se_glucose <- sd(sample_data$glucose) / sqrt(nrow(sample_data))
+se_glucose
+```
+
+-   standard error of the sample mean glucose: 1.207
+    -   estimate of the amount that the sample mean would differ from the true population mean across repeated samples of the same size
+    -   most sample means would fall within about ±1.21 units of the population mean
+:::
+
+------------------------------------------------------------------------
+
+### Key Takeaways
+
+::: {style="font-size:0.68em"}
+-   estimation uses sample data to approximate unknown population quantities
+
+-   research analysis is typically conducted on samples not entire populations
+
+-   common quantities estimated include:
+
+    -   mean biomarker levels
+    -   probabilities of disease or response
+    -   rates of clinical events
+    -   associations between variables
+
+-   estimates depend on the sample and vary as a result
+
+-   different samples from the same population produce different estimates: `sampling variability`
+
+-   estimates form a distribution centered near the population value across repeated samples, which is summarized by:
+
+    -   standard deviation (SD) → variability in observed data
+    -   standard error (SE) → variability of the estimate across samples
+:::
+
+------------------------------------------------------------------------

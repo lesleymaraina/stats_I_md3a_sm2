@@ -1,0 +1,645 @@
+---
+title: "Statistical Estimation: Evaluating Bias, Variance, and Sampling Behavior"
+
+author: "<br><br><span style='font-size:25px;'><strong>Lesley Chapman Hannah, Ph.D., M.S.</strong></span><br>College of Graduate Studies<br>Northeast Ohio Medical University"
+
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    transition: fade
+    chalkboard: true
+    smaller: false
+execute:
+  echo: true
+  warning: false
+  message: false
+editor: visual
+---
+
+```{r setup, echo=FALSE}
+library(tidyverse)
+library(scales)
+
+set.seed(104)
+
+biomarker_df <- tibble(
+  id = 1:180,
+  treatment = rep(c("Placebo", "Low dose", "High dose"), each = 60),
+  ifng = c(
+    rnorm(60, mean = 11.5, sd = 4.2),
+    rnorm(60, mean = 15.3, sd = 4.8),
+    rnorm(60, mean = 19.8, sd = 5.1)
+  ),
+  response = c(
+    rbinom(60, 1, 0.28),
+    rbinom(60, 1, 0.45),
+    rbinom(60, 1, 0.62)
+  ),
+  infections = c(
+    rpois(60, lambda = 1.4),
+    rpois(60, lambda = 1.1),
+    rpois(60, lambda = 0.8)
+  ),
+  age = round(rnorm(180, mean = 61, sd = 10)),
+  bmi = round(rnorm(180, mean = 29, sd = 4.5), 1)
+)
+```
+
+### Overview
+
+::: {style="font-size:0.5em"}
+-   understanding how to identify ideal estimators that target a specific quantity and with less variation per sample
+
+-   understand point estimates - sample-based value for a population parameter
+
+-   characterize bias - description of whether an estimator is centered on the truth across repeated samples
+
+-   discuss variance and standard error - descriptors of repeated-sampling
+:::
+
+------------------------------------------------------------------------
+
+### Central Theme
+
+::: {style="font-size:0.5em"}
+**Recap**:
+
+-   established that a sample statistic can be used to estimate an unknown population quantity
+-   `estimator` : defines how the data are used to approximate the population quantity \[i.e.: mean, sample proportion, regression coefficient\]
+
+**Current Aim**: Evaluate the quality of the estimator
+
+Indicators of a good estimator:
+
+1.  target the correct population quantity
+2.  vary as little as possible across repeated samples
+
+Estimator checks:
+
+-   determine whether the estimator is centered on the target parameter
+
+-   observe how widely the estimator varies across repeated samples
+
+-   determine whether the design assumptions needed for that estimator are plausible
+
+-   here the **sampling distribution** is a key tool for judging estimator quality
+:::
+
+------------------------------------------------------------------------
+
+### Point Estimation
+
+::: {style="font-size:0.5em"}
+-   **point estimate** : single numerical value computed from sample data to approximate an unknown population parameter
+
+-   interpretable quantities derived from data \[i.e.: average treatment effects, disease prevalence, or risk differences\] and serve as the basis for confidence intervals, hypothesis tests
+
+Two examples include:
+
+**Sample Mean**
+
+$$
+\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i
+$$
+
+and
+
+**Sample Proportion**
+
+$$
+\hat{p} = \frac{x}{n}
+$$
+
+-   $\bar{x}$: sample mean $\rightarrow$ estimate of a population mean $\mu$
+-   $x_i$: the value for the $i$th sampled observation
+-   $n$: sample size
+-   $\hat{p}$: sample proportion $\rightarrow$ estimate of a population proportion $p$
+-   $x$: number of observations in the sample with the characteristic of interest
+:::
+
+------------------------------------------------------------------------
+
+### Estimation in Biomedical Inference
+
+::: {style="font-size:0.6em"}
+-   estimation is used to quantify key quantities such as average biomarker level, disease prevalence, treatment response, or average processing time
+
+-   biased estimator can systematically misstate the underlying biology or clinical burden
+
+-   highly variable estimator can produce unstable results that differ substantially from one study sample to another
+:::
+
+------------------------------------------------------------------------
+
+### Common Failures in Statistical Estimation
+
+::: {style="font-size:0.6em"}
+estimator can fail \[provide a poor estimation for the true population parameter\] in two ways:
+
+-   exhibiting systematic deviation from the target [bias]
+
+-   displaying excessive sampling variability \[high variance across repeated samples
+
+-   estimator can fail because it is **biased**: estimator systematically misses the target
+
+-   estimator lacks accuracy if it does not target the true parameter on average [bias]
+
+-   estimator can be **too variable**: if estimator is centered correctly after multiple samples each individual sample-based estimates move around too much
+
+-   estimator lacks precision if it is too variable across samples \[variance\]
+
+The three panels therefore represent three distinct cases:
+
+-   **biased estimator**: sampling distribution is shifted away from the true value \[systematic error\]
+-   **unbiased imprecise estimator**: centered at the true value but with large spread \[high variability\]
+-   **unbiased and precise estimator**: centered at the true value with small spread \[low variability\]
+
+good estimation requires both correct centering \[low bias\] and tight concentration \[low variance\]
+:::
+
+------------------------------------------------------------------------
+
+## Bias
+
+::: {style="font-size:0.6em"}
+`Bias` measures systematic deviation from the true parameter:
+
+$$
+\operatorname{Bias}(\hat{\theta}) = E(\hat{\theta}) - \theta
+$$
+
+Where:
+
+-   $\hat{\theta}$: estimator
+
+-   $E(\hat{\theta})$: expected value or average of the estimator across repeated samples
+
+-   $\theta$: true population parameter being estimated
+
+-   bias = zero : estimator is **unbiased**
+
+-   bias = negative/positive value : average falls above or below the true parameter $\rightarrow$ estimator is **biased**
+:::
+
+------------------------------------------------------------------------
+
+### Unbiased and Biased Estimators
+
+::: {style="font-size:0.6em"}
+-   **unbiased statistic** :
+    -   sampling distribution centered at the true parameter
+    -   over many repeated samples estimate does not overestimate or underestimate the target
+-   **biased statistic** :
+    -   estimator whose sampling distribution is centered away from the true parameter
+        -   sampling distribution centered away from the target
+:::
+
+------------------------------------------------------------------------
+
+### Precision and Variance
+
+::: {style="font-size:0.6em"}
+-   `precision` : describes how tightly an estimator clusters
+-   estimator variance: expected squared distance between the estimator and the repeated-sample mean
+
+Variance Formula
+
+$$
+\operatorname{Var}(\hat{\theta}) = E\left[(\hat{\theta} - E(\hat{\theta}))^2\right]
+$$
+
+-   $\operatorname{Var}(\hat{\theta})$: variance of the estimator
+
+-   $\hat{\theta}$: random variable \[estimator\]
+
+-   $E(\hat{\theta})$: center of the estimator across multiple samples
+
+-   `smaller variance`: indicates that the estimator is more tightly concentrated around its expected value across repeated samples
+
+-   `larger variance` : indicates that the estimator is more dispersed across repeated samples
+:::
+
+------------------------------------------------------------------------
+
+### Accuracy Versus Precision
+
+::: {style="font-size:0.6em"}
+**accuracy** and **precision**: statistical properties that describe how an estimator’s sampling distribution relates to the true parameter value in terms of its center and spread
+
+-   **accuracy [bias]** : metric to describe how close the center of the estimator’s sampling distribution is to the true parameter value
+
+Example: accurate estimator is centered at the target in repeated sampling
+
+-   **precision \[variability\]**: metric describing the spread of the estimator’s sampling distribution
+
+Example: precise estimator has less sampling variability $\rightarrow$ repeated samples produce estimates that are more tightly clustered around the center of the distribution
+:::
+
+------------------------------------------------------------------------
+
+## Research Question Background: Chronic Kidney Disease
+
+::: {style="font-size:0.58em"}
+-   chronic kidney disease (CKD): sustained reduction in kidney function and is a major contributor to morbidity and mortality at the population level
+-   United States approximately 14–15% of adults are estimated to have CKD
+-   kidney function is quantified using estimated glomerular filtration rate (eGFR) - continuous measure derived from serum creatinine and patient characteristics that approximates filtration capacity
+
+estimated glomerular filtration rate \[eGFR\]
+
+-   ≥ 90 → generally considered normal kidney function
+-   60–89 → mildly reduced kidney function
+-   \< 60 → clinically meaningful reduction, consistent with chronic kidney disease (CKD)
+:::
+
+------------------------------------------------------------------------
+
+## Research Aim
+
+::: {style="font-size:0.58em"}
+Research goal(s) estimate two population quantities:
+
+-   population mean eGFR
+-   population proportion with CKD
+
+Approach
+
+1.  create a simulated biomedical population\
+2.  generate simulated true population quantities
+3.  draw study samples from that population\
+4.  compute point estimates from each sample\
+5.  examine repeated samples to study sampling distributions, bias, variance, precision
+:::
+
+------------------------------------------------------------------------
+
+## Simulated Population Dataset
+
+::: {style="font-size:0.50em"}
+```{r, echo = FALSE}
+library(tidyverse)
+library(broom)
+
+set.seed(123)
+
+population <- tibble(
+  id = 1:100000,
+  age = pmin(pmax(rnorm(100000, mean = 59, sd = 12), 18), 90),
+  systolic_bp = pmin(pmax(rnorm(100000, mean = 128, sd = 16), 90), 220),
+  uacr = rgamma(100000, shape = 2.2, scale = 18),
+  egfr = 118 - 0.72 * age - 0.11 * systolic_bp + rnorm(100000, mean = 0, sd = 10)
+) |>
+  mutate(
+    egfr = pmax(egfr, 8),
+    ckd = if_else(egfr < 60, 1, 0)
+  )
+
+head(population)
+```
+
+**Overview**
+
+-   one row per individual in the population
+
+-   **eGFR \[estimated glomerular filtration rate\]**:
+
+    -   clinical measure of kidney function, expressed in mL/min/1.73 m²
+    -   reflects how effectively the kidneys filter waste from the blood
+
+-   **CKD \[chronic kidney disease\]** :
+
+    -   long-term condition characterized by reduced kidney function
+    -   binary indicator equal to 1 when eGFR is below 60 $\rightarrow$ indicator of the presence of disease
+
+-   **age**: clinical predictor associated with physiologic decline in kidney function\
+
+-   **systolic_bp**: blood pressure measure included because elevated blood pressure is clinically relevant to kidney disease risk\
+
+-   **uacr**: urine albumin-to-creatinine ratio additional kidney function biomarker
+:::
+
+------------------------------------------------------------------------
+
+## Population Quantities
+
+::: {style="font-size:0.58em"}
+Here we define the target quantities in the population:
+
+-   population mean eGFR
+
+-   population proportion with CKD
+
+-   **population parameters** that the estimators are trying to recover
+
+-   true average kidney function in the full population \[mean eGFR\]
+
+```{r, echo=FALSE}
+true_mean_egfr <- mean(population$egfr)
+
+true_mean_egfr
+
+```
+
+-   true proportion of individuals classified as having CKD in this simulated population
+
+```{r}
+true_prop_ckd <- mean(population$ckd)
+
+true_prop_ckd
+```
+:::
+
+------------------------------------------------------------------------
+
+### Determine Point Estimates
+
+::: {style="font-size:0.58em"}
+Following point estimates approximate the population quantity using only the information observed in the sample:
+
+-   **sample mean eGFR** : point estimate because that reduces all observed eGFR values in the sample to one number that represents the population mean kidney function
+-   **sample proportion with CKD** : point estimate because that reduces all observed disease indicators a single value that represents the population prevalence of CKD
+
+Multiple individual observations are summarized in a single value representing the corresponding population parameter
+
+```{r, echo=FALSE}
+set.seed(321)
+
+sample_data <- population |>
+  slice_sample(n = 150)
+
+sample_summary <- sample_data |>
+  summarise(
+    sample_mean_egfr = mean(egfr),
+    sample_prop_ckd = mean(ckd)
+  )
+
+sample_summary
+```
+
+-   sample mean eGFR = 60.6 : average kidney function among the individuals who were included in the sample
+
+-   sample proportion with CKD = 0.513 : 51.3% of individuals in this sample meet the CKD definition (eGFR \< 60)
+
+-   estimates are close to the population values, the sample happened to produce estimates near true population parameters
+:::
+
+------------------------------------------------------------------------
+
+### Sampling Distribution of the Sample Mean
+
+::: {style="font-size:0.57em"}
+-   **sampling distribution** : distribution of an estimator across many repeated samples of the same size
+
+-   distribution shows both the center and the spread of the estimator
+
+-   2,000 independent study samples of size 150 drawn randomly from the population - sample mean eGFR is calculated for each sample
+
+-   `avg_estimate` : repeated-sample average of the estimator [bias]
+
+-   `sd_of_estimates` : empirical standard deviation of the estimates\[sampling variability\]
+
+```{r, echo=FALSE}
+set.seed(100)
+
+n_reps <- 2000
+n_sample <- 150
+
+sampling_results <- tibble(
+  rep = 1:n_reps,
+  sample_mean_egfr = map_dbl(rep, ~ {
+    population |>
+      slice_sample(n = n_sample) |>
+      summarise(mean_egfr = mean(egfr)) |>
+      pull(mean_egfr)
+  })
+)
+
+out <- sampling_results |>
+  summarise(
+    avg_estimate = mean(sample_mean_egfr),
+    sd_of_estimates = sd(sample_mean_egfr)
+  )
+
+out
+```
+
+-   average of the sample means across many repeated samples : 61.04
+-   standard deviation of the sample means : 1.08
+:::
+
+------------------------------------------------------------------------
+
+### Sampling Distribution of the Sample Mean
+
+::: {style="font-size:0.50em"}
+-   histogram shows the distribution of sample mean estimates across repeated samples
+
+-   dashed line marks the true population mean eGFR
+
+-   estimator is performing well $\rightarrow$ distribution is centered near the dashed line
+
+-   narrower distribution indicates increased precision
+
+```{r, echo=FALSE}
+plot <- ggplot(sampling_results, aes(x = sample_mean_egfr)) +
+  geom_histogram(bins = 35) +
+  geom_vline(xintercept = true_mean_egfr, linetype = "dashed") +
+  labs(
+    title = "Sampling Distribution of the Sample Mean for eGFR",
+    x = "Sample Mean eGFR",
+    y = "Number of Repeated Samples"
+  ) +
+  theme_bw()
+
+plot
+```
+:::
+
+------------------------------------------------------------------------
+
+## Unbiased and Biased Estimators
+
+::: {style="font-size:0.55em"}
+Goal: compare the following two estimators of mean eGFR:
+
+-   estimator based on a simple random sample from the full population\
+-   biased estimator based on a truncated sampling frame that excludes individuals with lower eGFR values
+
+```{r, echo=FALSE}
+set.seed(200)
+
+bias_demo <- tibble(
+  rep = 1:n_reps,
+  unbiased_mean = map_dbl(rep, ~ {
+    population |>
+      slice_sample(n = n_sample) |>
+      summarise(val = mean(egfr)) |>
+      pull(val)
+  }),
+  biased_mean = map_dbl(rep, ~ {
+    population |>
+      filter(egfr >= 45) |>
+      slice_sample(n = n_sample) |>
+      summarise(val = mean(egfr)) |>
+      pull(val)
+  })
+)
+
+bias_results <- tibble(
+  estimator = c("Unbiased sample mean", "Biased sample mean"),
+  repeated_sample_mean = c(mean(bias_demo$unbiased_mean), mean(bias_demo$biased_mean)),
+  bias = c(
+    mean(bias_demo$unbiased_mean) - true_mean_egfr,
+    mean(bias_demo$biased_mean) - true_mean_egfr
+  )
+)
+
+bias_results
+```
+
+**Interpretation**
+
+-   unbiased sample mean 61.4 - average of the sample mean estimates across many repeated random samples from the full population with 0.0163 bias
+
+-   low bias indicates that on average the estimator recovers the true population mean with essentially no systematic error
+
+-   64.2 : average of the sample mean estimates across repeated samples drawn from the truncated population \[i.e.: where lower eGFR individuals are excluded\]
+
+-   2.79 : bias - estimator overestimates the true population mean by about 2.79 units on average
+:::
+
+------------------------------------------------------------------------
+
+### Unbiased and Biased Estimators
+
+
+```{r, echo=FALSE}
+
+#| fig-width: 1
+#| fig-height: 2
+
+
+bias_demo_long <- bias_demo |>
+  pivot_longer(
+    cols = c(unbiased_mean, biased_mean),
+    names_to = "estimator",
+    values_to = "estimate"
+  )
+
+plot <- ggplot(bias_demo_long, aes(x = estimate)) +
+  geom_histogram(bins = 30) +
+  geom_vline(xintercept = true_mean_egfr, linetype = "dashed") +
+  facet_wrap(~ estimator, scales = "free_y") +
+  labs(
+    title = "Biased and Unbiased Estimators of Mean eGFR",
+    x = "Estimated Mean eGFR",
+    y = "Number of Repeated Samples"
+  ) +
+  theme_bw()
+plot
+
+```
+
+::: {style="font-size:0.50em"}
+
+**Interpretation**
+
+-   unbiased estimator : centered near the true mean eGFR
+-   biased estimator : shifted upward away from the target because lower eGFR individuals were excluded before sampling
+
+:::
+
+------------------------------------------------------------------------
+
+### Precision and Sample Size
+
+::: {style="font-size:0.55em"}
+-   compare sample estimator across different sample sizes
+-   table shows the same estimator \[sample mean eGFR—behaves across repeated samples\] as the sample size increases
+
+Note: target population mean changes very little while the precision of the estimator changes
+
+-   `n` : sample size used for each draw
+-   `mean_estimate` : average of the sample means across many repeated samples
+-   `variance_estimate` and `sd_estimate` : quantify how much the sample mean varies from sample to sample
+
+```{r, echo=FALSE}
+simulate_means <- function(n_sample, n_reps = 2000) {
+  tibble(
+    rep = 1:n_reps,
+    sample_mean = map_dbl(rep, ~ {
+      population |>
+        slice_sample(n = n_sample) |>
+        summarise(val = mean(egfr)) |>
+        pull(val)
+    }),
+    n = n_sample
+  )
+}
+
+means_n30  <- simulate_means(30)
+means_n150 <- simulate_means(150)
+means_n500 <- simulate_means(500)
+
+precision_demo <- bind_rows(means_n30, means_n150, means_n500)
+
+precision_summary <- precision_demo |>
+  group_by(n) |>
+  summarise(
+    mean_estimate = mean(sample_mean),
+    variance_estimate = var(sample_mean),
+    sd_estimate = sd(sample_mean)
+  )
+
+precision_summary
+```
+
+**Interpretation**
+
+-   mean estimate remains stable (61.5 \[n=30\], 61.4 \[n=150\] and n=500)
+-   indicates the estimator stays centered near the population mean
+-   as sample size increases $\rightarrow$ variance decreases from 5.75 to 0.350 and the standard deviation decreases from 2.40 to 0.592
+-   estimates become more precise across repeated samples
+:::
+
+------------------------------------------------------------------------
+
+### Summary
+
+::: {style="font-size:0.50em"}
+-   analysis examples discussed began defining a population quantity \[parameter that cannot be directly observed
+-   point estimate is a single numerical value computed from sample data to approximate that population parameter
+
+Common estimators include:
+
+-   sample mean → estimates population mean
+-   sample proportion → estimates population prevalence
+
+Sampling distribution describes how an estimator behaves across repeated samples
+
+-   center → reflects bias (accuracy)
+-   spread → reflects variance (precision)
+:::
+
+------------------------------------------------------------------------
+
+### Summary
+
+::: {style="font-size:0.50em"}
+-   useful estimators generally have two properties:
+
+    -   low bias \[accuracy\]
+
+        -   estimator is centered near the true population parameter
+        -   example: repeated mean ≈ 61.4 with negligible bias
+
+    -   low variance \[precision\]
+
+        -   estimates vary minimally across repeated samples
+
+-   bias can arise from systematic issues in data collection or sampling design
+
+    -   precision improves with larger sample size
+:::
+
+------------------------------------------------------------------------
